@@ -25,7 +25,6 @@
 ### Install via Homebrew (macOS)
 
 ```sh
-brew tap kartiklabhshetwar/lazycommit
 brew install lazycommit
 ```
 
