@@ -20,6 +20,22 @@ const excludeFromDiff = (path: string) => `:(exclude)${path}`;
 const filesToExclude = [
 	'package-lock.json',
 	'pnpm-lock.yaml',
+	'node_modules/**',
+	'dist/**',
+	'build/**',
+	'.next/**',
+	'coverage/**',
+	'.nyc_output/**',
+	'*.log',
+	'*.tmp',
+	'*.temp',
+	'*.cache',
+	'.DS_Store',
+	'Thumbs.db',
+	'*.min.js',
+	'*.min.css',
+	'*.bundle.js',
+	'*.bundle.css',
 	'*.lock',
 ].map(excludeFromDiff);
 
@@ -59,10 +75,13 @@ const estimateTokenCount = (text: string): number => {
 };
 
 // Split diff into chunks that fit within token limits
-export const chunkDiff = (diff: string, maxTokens: number = 6000): string[] => {
+// We use a conservative approach: reserve ~2000 tokens for system prompt and response
+export const chunkDiff = (diff: string, maxTokens: number = 4000): string[] => {
+	// Reserve space for system prompt and response (roughly 2000 tokens)
+	const availableTokens = Math.max(2000, maxTokens - 2000);
 	const estimatedTokens = estimateTokenCount(diff);
 	
-	if (estimatedTokens <= maxTokens) {
+	if (estimatedTokens <= availableTokens) {
 		return [diff];
 	}
 
@@ -75,7 +94,7 @@ export const chunkDiff = (diff: string, maxTokens: number = 6000): string[] => {
 		const lineTokens = estimateTokenCount(line);
 		
 		// If adding this line would exceed the limit, start a new chunk
-		if (currentTokens + lineTokens > maxTokens && currentChunk.length > 0) {
+		if (currentTokens + lineTokens > availableTokens && currentChunk.length > 0) {
 			chunks.push(currentChunk.trim());
 			currentChunk = line + '\n';
 			currentTokens = lineTokens;

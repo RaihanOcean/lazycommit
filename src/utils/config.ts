@@ -115,7 +115,7 @@ const configParsers = {
 	},
 	'chunk-size'(chunkSize?: string) {
 		if (!chunkSize) {
-			return 6000;
+			return 4000;
 		}
 
 		parseAssert('chunk-size', /^\d+$/.test(chunkSize), 'Must be an integer');

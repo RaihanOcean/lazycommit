@@ -23,7 +23,6 @@ const createChatCompletion = async (
 	});
 
 	try {
-		// Groq doesn't support n > 1, so we need to make multiple requests
 		if (n > 1) {
 			const completions = await Promise.all(
 				Array.from({ length: n }, () =>
@@ -40,7 +39,6 @@ const createChatCompletion = async (
 				)
 			);
 			
-			// Combine all completions into a single response
 			return {
 				choices: completions.flatMap(completion => completion.choices),
 			};
@@ -70,7 +68,6 @@ const createChatCompletion = async (
 				errorMessage += '\n\nCheck the API status: https://console.groq.com/status';
 			}
 
-			// Handle rate limit errors specifically
 			if (error.status === 413 || (error.message && error.message.includes('rate_limit_exceeded'))) {
 				errorMessage += '\n\n💡 Tip: Your diff is too large. Try:\n' +
 					'1. Commit files in smaller batches\n' +
@@ -164,11 +161,9 @@ export const generateCommitMessageFromChunks = async (
 	proxy?: string,
 	chunkSize: number = 6000
 ) => {
-	// First, try to chunk the diff if it's too large
 	const chunks = chunkDiff(diff, chunkSize);
 	
 	if (chunks.length === 1) {
-		// Single chunk, use regular method
 		try {
 			return await generateCommitMessage(
 				apiKey,
@@ -182,7 +177,6 @@ export const generateCommitMessageFromChunks = async (
 				proxy
 			);
 		} catch (error) {
-			// If single chunk fails, try to provide more helpful error
 			throw new KnownError(`Failed to generate commit message: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
@@ -215,13 +209,44 @@ ${chunk}`;
 				chunkMessages.push(messages[0]);
 			}
 		} catch (error) {
-			// If individual chunk fails, continue with other chunks
 			console.warn(`Failed to process chunk ${i + 1}:`, error instanceof Error ? error.message : 'Unknown error');
 		}
 	}
 
 	if (chunkMessages.length === 0) {
-		throw new KnownError('Failed to generate commit messages for any chunks');
+		console.warn('All chunks failed, attempting summary-based commit message...');
+		const fileList = diff.split('\n')
+			.filter(line => line.startsWith('diff --git'))
+			.map(line => line.split(' ')[2]?.replace('a/', '') || '')
+			.filter(Boolean)
+			.slice(0, 10);
+		
+		const summaryPrompt = `Generate a commit message for these file changes:
+${fileList.map(file => `- ${file}`).join('\n')}
+
+The changes appear to be a large commit with many files. Generate a concise commit message that captures the overall purpose.`;
+
+		try {
+			const summaryMessages = await generateCommitMessage(
+				apiKey,
+				model,
+				locale,
+				summaryPrompt,
+				1,
+				maxLength,
+				type,
+				timeout,
+				proxy
+			);
+			
+			if (summaryMessages.length > 0) {
+				return summaryMessages;
+			}
+		} catch (error) {
+			console.warn('Summary-based commit message also failed:', error);
+		}
+		
+		throw new KnownError('Failed to generate commit messages. The diff may be too large. Try excluding build artifacts with --exclude or committing in smaller batches.');
 	}
 
 	// If we have multiple chunk messages, try to combine them intelligently
