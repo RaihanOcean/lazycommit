@@ -97,12 +97,12 @@ lazycommit --exclude package-lock.json --exclude dist/
 
 #### Handling large diffs
 
-For large commits with many files, lazycommit automatically uses intelligent chunking to stay within API limits:
+For large commits with many files, lazycommit automatically stays within API limits:
 
-- **Automatic detection**: Large diffs (>50KB) are automatically detected
-- **Smart chunking**: Diffs are split into manageable pieces (default: 6000 tokens)
-- **Chunked processing**: Each chunk is analyzed separately, then combined
-- **Progress indicators**: Clear feedback during chunked processing
+- **Automatic detection**: Large diffs are detected
+- **Per-file splitting**: Diffs are split by file first
+- **Safe chunking**: Each file diff is chunked conservatively (default: 4000 tokens)
+- **Combination**: Results are combined into one concise message
 
 ### Git hook
 
@@ -215,7 +215,7 @@ lazycommit config set proxy=
 
 #### model
 
-Default: `Openai/gpt-oss-120b`
+Default: `openai/gpt-oss-120b`
 
 #### timeout
 
@@ -255,9 +255,9 @@ lazycommit config set type=
 
 #### chunk-size
 
-Default: `6000`
+Default: `4000`
 
-The maximum number of tokens per chunk when processing large diffs. This helps avoid API rate limits:
+The maximum number of tokens per chunk when processing large diffs. This helps avoid API limits and keeps requests fast:
 
 ```sh
 lazycommit config set chunk-size 4000
@@ -275,11 +275,10 @@ The tool uses Groq's fast inference API to provide quick and accurate commit mes
 
 For large commits that exceed API token limits, lazycommit automatically:
 
-1. **Detects large diffs** (>50KB or ~12.5k tokens)
-2. **Chunks the diff** into manageable pieces (default: 6000 tokens)
-3. **Processes each chunk** separately to generate partial commit messages
-4. **Combines results** into a single, comprehensive commit message
-5. **Falls back gracefully** if chunking fails, showing individual chunk messages
+1. **Splits by file** to avoid oversized requests
+2. **Chunks each file** into manageable pieces (default: 4000 tokens)
+3. **Processes chunks** and combines results into a single message
+4. **Falls back gracefully** to a high-level summary if needed
 
 This ensures you can commit large changes (like new features, refactoring, or initial project setup) without hitting API limits.
 
