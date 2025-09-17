@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lazycommit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="description" content="lazycommit — AI-powered git commit messages using Groq. Never write a commit message again.">
+<meta name="theme-color" content="#24292f">
+<style>
+  body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; color: #222; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { margin: 12px 0 8px; font-size: 28px; }
+  p { margin: 8px 0; }
+  .hero { text-align: center; }
+  .hero img { width: 100%; max-width: 720px; border-radius: 8px; }
+  .star { display: inline-flex; align-items: center; gap: 8px; margin: 16px 0; padding: 10px 14px; border-radius: 6px; background: #24292f; color: #fff; text-decoration: none; font-weight: 600; }
+  .count { background: rgba(255,255,255,.15); padding: 2px 8px; border-radius: 999px; font-size: 14px; }
+  pre { background: #f6f8fa; padding: 12px; border-radius: 8px; overflow: auto; position: relative; }
+  code { font-family: Inter, SFMono-Regular, Menlo, Consolas, monospace; }
+  .section { margin-top: 24px; }
+  .muted { color: #6a737d; font-size: 14px; }
+  .version { display: inline-block; margin-left: 8px; font-size: 14px; color: #6a737d; }
+  .copy { position: absolute; top: 8px; right: 8px; appearance: none; border: 1px solid #d0d7de; background: #fff; color: #24292f; border-radius: 4px; padding: 4px 8px; font-weight: 600; font-size: 12px; cursor: pointer; opacity: 0.8; }
+  .copy:hover { opacity: 1; background: #f6f8fa; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <img alt="lazycommit" src="https://github.com/user-attachments/assets/ee0419ef-2461-4b45-8509-973f3bb0f55c">
+      <h1>lazycommit <span id="version" class="version"></span></h1>
+      <p>AI-powered git commit messages using Groq.</p>
+      <a class="star" href="https://github.com/KartikLabhshetwar/lazycommit" target="_blank" rel="noreferrer noopener">
+        ⭐ Star this repo <span id="stars" class="count">…</span>
+      </a>
+    </div>
+
+    <div class="section">
+      <h2>Install</h2>
+      <pre><code id="npm-cmd">npm install -g lazycommitt</code><button class="copy" data-target="npm-cmd" aria-label="Copy npm install command">Copy</button></pre>
+      <p>Homebrew (tap):</p>
+      <pre><code id="brew-cmd">brew install lazycommit</code><button class="copy" data-target="brew-cmd" aria-label="Copy brew install command">Copy</button></pre>
+      <p class="muted">If this fails on your machine, use tap first: <code>brew tap kartiklabhshetwar/lazycommit</code> then <code>brew install lazycommit</code>.</p>
+    </div>
+
+    <div class="section">
+      <h2>Quick start</h2>
+      <pre><code># set api key
+lazycommit config set GROQ_API_KEY=your_api_key
+
+# stage files
+git add .
+
+# generate and commit
+lazycommit</code></pre>
+    </div>
+  </div>
+
+  <script>
+    (async function loadStars(){
+      try{
+        const r = await fetch('https://api.github.com/repos/KartikLabhshetwar/lazycommit');
+        const j = await r.json();
+        document.getElementById('stars').textContent = j.stargazers_count ?? '0';
+      }catch{ /* noop */ }
+    })();
+
+    (async function loadVersion(){
+      try{
+        const r = await fetch('https://registry.npmjs.org/lazycommitt');
+        const j = await r.json();
+        const v = (j['dist-tags'] && j['dist-tags'].latest) || j.version;
+        if (v) document.getElementById('version').textContent = 'v' + v;
+      }catch{ /* noop */ }
+    })();
+
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.copy');
+      if (!btn) return;
+      const id = btn.getAttribute('data-target');
+      const el = document.getElementById(id);
+      if (!el) return;
+      const text = el.textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        const old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = old; }, 1200);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -19,6 +19,17 @@ import { getConfig } from '../utils/config.js';
 import { generateCommitMessageFromChunks, generateCommitMessageFromSummary } from '../utils/groq.js';
 import { KnownError, handleCliError } from '../utils/error.js';
 
+const ASCII_LOGO = `╔──────────────────────────────────────────────────────────────────────────────────────╗
+│                                                                                      │
+│ ██╗      █████╗ ███████╗██╗   ██╗ ██████╗ ██████╗ ███╗   ███╗███╗   ███╗██╗████████╗ │
+│ ██║     ██╔══██╗╚══███╔╝╚██╗ ██╔╝██╔════╝██╔═══██╗████╗ ████║████╗ ████║██║╚══██╔══╝ │
+│ ██║     ███████║  ███╔╝  ╚████╔╝ ██║     ██║   ██║██╔████╔██║██╔████╔██║██║   ██║    │
+│ ██║     ██╔══██║ ███╔╝    ╚██╔╝  ██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██║   ██║    │
+│ ███████╗██║  ██║███████╗   ██║   ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║██║   ██║    │
+│ ╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝    ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝   ╚═╝    │
+│                                                                                      │
+╚──────────────────────────────────────────────────────────────────────────────────────╝`;
+
 export default async (
 	generate: number | undefined,
 	excludeFiles: string[],
@@ -27,6 +38,8 @@ export default async (
 	rawArgv: string[]
 ) =>
 	(async () => {
+		console.log(ASCII_LOGO);
+		console.log();
 		intro(bgCyan(black(' lazycommit ')));
 		await assertGitRepo();
 
