@@ -1,28 +1,35 @@
 {
   "name": "lazycommitt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Writes your git commit messages for you with AI using Groq",
   "main": "index.js",
   "scripts": {
     "build": "pkgroll --minify",
-		"lint": "",
-		"type-check": "tsc",
-		"test": "tsx tests",
-		"prepack": "pnpm build && clean-pkg-json"
+    "lint": "",
+    "type-check": "tsc",
+    "test": "tsx tests",
+    "prepack": "pnpm build && clean-pkg-json"
   },
-  "keywords": ["git", "commit", "ai", "groq", "github", "cli"],
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "groq",
+    "github",
+    "cli"
+  ],
   "author": "Kartik Labhshetwar",
   "license": "Apache-2.0",
   "repository": "KartikLabhshetwar/lazycommit",
   "packageManager": "pnpm@10.15.0",
   "type": "module",
-	"files": [
-		"dist"
-	],
-	"bin": {
-		"lazycommit": "./dist/cli.mjs",
-		"lzc": "./dist/cli.mjs"
-	},
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "lazycommit": "./dist/cli.mjs",
+    "lzc": "./dist/cli.mjs"
+  },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "@types/ini": "^4.1.1",
