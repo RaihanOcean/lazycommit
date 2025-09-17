@@ -1,5 +1,5 @@
 {
-  "name": "lazycommit",
+  "name": "lazycommitz",
   "version": "1.0.0",
   "description": "Writes your git commit messages for you with AI using Groq",
   "main": "index.js",
