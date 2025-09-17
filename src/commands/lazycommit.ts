@@ -12,9 +12,10 @@ import {
 	assertGitRepo,
 	getStagedDiff,
 	getDetectedMessage,
+	getDiffSummary,
 } from '../utils/git.js';
 import { getConfig } from '../utils/config.js';
-import { generateCommitMessage } from '../utils/groq.js';
+import { generateCommitMessageFromChunks } from '../utils/groq.js';
 import { KnownError, handleCliError } from '../utils/error.js';
 
 export default async (
@@ -45,11 +46,23 @@ export default async (
 			);
 		}
 
-		detectingFiles.stop(
-			`${getDetectedMessage(staged.files)}:\n${staged.files
-				.map((file) => `     ${file}`)
-				.join('\n')}`
-		);
+		// Check if diff is very large and show summary
+		const diffSummary = await getDiffSummary(excludeFiles);
+		const isLargeDiff = staged.diff.length > 50000; // ~12.5k tokens
+
+		if (isLargeDiff && diffSummary) {
+			detectingFiles.stop(
+				`${getDetectedMessage(staged.files)} (${diffSummary.totalChanges.toLocaleString()} changes):\n${staged.files
+					.map((file) => `     ${file}`)
+					.join('\n')}\n\n⚠️  Large diff detected - using chunked processing`
+			);
+		} else {
+			detectingFiles.stop(
+				`${getDetectedMessage(staged.files)}:\n${staged.files
+					.map((file) => `     ${file}`)
+					.join('\n')}`
+			);
+		}
 
 		const { env } = process;
 		const config = await getConfig({
@@ -64,7 +77,7 @@ export default async (
 		s.start('The AI is analyzing your changes');
 		let messages: string[];
 		try {
-			messages = await generateCommitMessage(
+			messages = await generateCommitMessageFromChunks(
 				config.GROQ_API_KEY,
 				config.model,
 				config.locale,
@@ -73,7 +86,8 @@ export default async (
 				config['max-length'],
 				config.type,
 				config.timeout,
-				config.proxy
+				config.proxy,
+				config['chunk-size']
 			);
 		} finally {
 			s.stop('Changes analyzed');

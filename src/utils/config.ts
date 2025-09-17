@@ -113,6 +113,27 @@ const configParsers = {
 
 		return parsed;
 	},
+	'chunk-size'(chunkSize?: string) {
+		if (!chunkSize) {
+			return 6000;
+		}
+
+		parseAssert('chunk-size', /^\d+$/.test(chunkSize), 'Must be an integer');
+
+		const parsed = Number(chunkSize);
+		parseAssert(
+			'chunk-size',
+			parsed >= 1000,
+			'Must be at least 1000 tokens'
+		);
+		parseAssert(
+			'chunk-size',
+			parsed <= 8000,
+			'Must be at most 8000 tokens (Groq limit)'
+		);
+
+		return parsed;
+	},
 } as const;
 
 type ConfigKeys = keyof typeof configParsers;
