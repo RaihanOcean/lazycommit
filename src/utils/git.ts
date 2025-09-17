@@ -75,13 +75,10 @@ const estimateTokenCount = (text: string): number => {
 };
 
 // Split diff into chunks that fit within token limits
-// We use a conservative approach: reserve ~2000 tokens for system prompt and response
 export const chunkDiff = (diff: string, maxTokens: number = 4000): string[] => {
-	// Reserve space for system prompt and response (roughly 2000 tokens)
-	const availableTokens = Math.max(2000, maxTokens - 2000);
 	const estimatedTokens = estimateTokenCount(diff);
 	
-	if (estimatedTokens <= availableTokens) {
+	if (estimatedTokens <= maxTokens) {
 		return [diff];
 	}
 
@@ -94,7 +91,7 @@ export const chunkDiff = (diff: string, maxTokens: number = 4000): string[] => {
 		const lineTokens = estimateTokenCount(line);
 		
 		// If adding this line would exceed the limit, start a new chunk
-		if (currentTokens + lineTokens > availableTokens && currentChunk.length > 0) {
+		if (currentTokens + lineTokens > maxTokens && currentChunk.length > 0) {
 			chunks.push(currentChunk.trim());
 			currentChunk = line + '\n';
 			currentTokens = lineTokens;

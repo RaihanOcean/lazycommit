@@ -214,39 +214,7 @@ ${chunk}`;
 	}
 
 	if (chunkMessages.length === 0) {
-		console.warn('All chunks failed, attempting summary-based commit message...');
-		const fileList = diff.split('\n')
-			.filter(line => line.startsWith('diff --git'))
-			.map(line => line.split(' ')[2]?.replace('a/', '') || '')
-			.filter(Boolean)
-			.slice(0, 10);
-		
-		const summaryPrompt = `Generate a commit message for these file changes:
-${fileList.map(file => `- ${file}`).join('\n')}
-
-The changes appear to be a large commit with many files. Generate a concise commit message that captures the overall purpose.`;
-
-		try {
-			const summaryMessages = await generateCommitMessage(
-				apiKey,
-				model,
-				locale,
-				summaryPrompt,
-				1,
-				maxLength,
-				type,
-				timeout,
-				proxy
-			);
-			
-			if (summaryMessages.length > 0) {
-				return summaryMessages;
-			}
-		} catch (error) {
-			console.warn('Summary-based commit message also failed:', error);
-		}
-		
-		throw new KnownError('Failed to generate commit messages. The diff may be too large. Try excluding build artifacts with --exclude or committing in smaller batches.');
+		throw new KnownError('Failed to generate commit messages for any chunks');
 	}
 
 	// If we have multiple chunk messages, try to combine them intelligently
