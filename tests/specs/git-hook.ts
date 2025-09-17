@@ -9,7 +9,9 @@ import {
 
 export default testSuite(({ describe }) => {
 	describe('Git hook', ({ test }) => {
-		assertGroqToken();
+		if (!assertGroqToken()) {
+			return;
+		}
 
 		test('errors when not in Git repo', async () => {
 			const { fixture, lazycommit } = await createFixture(files);

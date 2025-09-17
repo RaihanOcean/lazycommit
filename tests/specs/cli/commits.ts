@@ -15,9 +15,11 @@ export default testSuite(({ describe }) => {
 		return;
 	}
 
-	assertGroqToken();
-
 	describe('Commits', async ({ test, describe }) => {
+		if (!assertGroqToken()) {
+			return;
+		}
+
 		test('Excludes files', async () => {
 			const { fixture, lazycommit } = await createFixture(files);
 			const git = await createGit(fixture.path);

@@ -68,10 +68,10 @@ export const files = Object.freeze({
 
 export const assertGroqToken = () => {
 	if (!process.env.GROQ_API_KEY) {
-		throw new Error(
-			'⚠️  process.env.GROQ_API_KEY is necessary to run these tests. Skipping...'
-		);
+		console.warn('⚠️  process.env.GROQ_API_KEY is necessary to run these tests. Skipping...');
+		return false;
 	}
+	return true;
 };
 
 // See ./diffs/README.md in order to generate diff files
