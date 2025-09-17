@@ -17,7 +17,7 @@
 1. Install _lazycommit_:
 
    ```sh
-   npm install -g lazycommitz
+   npm install -g lazycommitt
    ```
 
 2. Retrieve your API key from [Groq Console](https://console.groq.com/keys)
@@ -43,7 +43,7 @@ lazycommit --version
 If it's not the [latest version](https://github.com/KartikLabhshetwar/lazycommit/releases/latest), run:
 
 ```sh
-npm update -g lazycommitz
+npm update -g lazycommitt
 ```
 
 ## Usage
