@@ -1,6 +1,8 @@
 <div align="center">
   <div>
     <h1 align="center">lazycommit</h1>
+<img width="2816" height="1536" alt="lazycommit" src="https://github.com/user-attachments/assets/ee0419ef-2461-4b45-8509-973f3bb0f55c" />
+
   </div>
 	<p>A CLI that writes your git commit messages for you with AI using Groq. Never write a commit message again.</p>
 	<a href="https://www.npmjs.com/package/lazycommitz"><img src="https://img.shields.io/npm/v/lazycommitt" alt="Current version"></a>
