@@ -2,7 +2,7 @@ import Groq from 'groq-sdk';
 import { KnownError } from './error.js';
 import type { CommitType } from './config.js';
 import { generatePrompt } from './prompt.js';
-import { chunkDiff } from './git.js';
+import { chunkDiff, splitDiffByFile, estimateTokenCount } from './git.js';
 
 const createChatCompletion = async (
 	apiKey: string,
@@ -97,6 +97,30 @@ const sanitizeMessage = (message: string) =>
 
 const deduplicateMessages = (array: string[]) => Array.from(new Set(array));
 
+const conventionalPrefixes = [
+    'feat:', 'fix:', 'docs:', 'style:', 'refactor:', 'perf:', 'test:', 'build:', 'ci:', 'chore:', 'revert:'
+];
+
+const deriveMessageFromReasoning = (text: string, maxLength: number): string | null => {
+    const cleaned = text.replace(/\s+/g, ' ').trim();
+    // Try to find a conventional-style line inside reasoning
+    const match = cleaned.match(/\b(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)\b\s*:?\s+[^.\n]+/i);
+    let candidate = match ? match[0] : cleaned.split(/[.!?]/)[0];
+    // Ensure prefix formatting: if starts with a known type w/o colon, add colon
+    const lower = candidate.toLowerCase();
+    for (const prefix of conventionalPrefixes) {
+        const p = prefix.slice(0, -1); // without colon
+        if (lower.startsWith(p + ' ') && !lower.startsWith(prefix)) {
+            candidate = p + ': ' + candidate.slice(p.length + 1);
+            break;
+        }
+    }
+    candidate = sanitizeMessage(candidate);
+    if (!candidate) return null;
+    if (candidate.length > maxLength) candidate = candidate.slice(0, maxLength);
+    return candidate;
+};
+
 export const generateCommitMessage = async (
 	apiKey: string,
 	model: string,
@@ -132,11 +156,23 @@ export const generateCommitMessage = async (
 			proxy
 		);
 
-		return deduplicateMessages(
-			completion.choices
-				.filter((choice) => choice.message?.content)
-				.map((choice) => sanitizeMessage(choice.message!.content as string))
-		);
+        const messages = completion.choices
+            .map((choice) => choice.message?.content || '')
+            .map((text) => sanitizeMessage(text as string))
+            .filter(Boolean);
+
+        if (messages.length > 0) return deduplicateMessages(messages);
+
+        // Fallback: some Groq models return reasoning with an empty content
+        const reasoningCandidates = (completion.choices as any[])
+            .map((c) => (c as any).message?.reasoning || '')
+            .filter(Boolean) as string[];
+        for (const reason of reasoningCandidates) {
+            const derived = deriveMessageFromReasoning(reason, maxLength);
+            if (derived) return [derived];
+        }
+
+        return [];
 	} catch (error) {
 		const errorAsAny = error as any;
 		if (errorAsAny.code === 'ENOTFOUND') {
@@ -161,7 +197,10 @@ export const generateCommitMessageFromChunks = async (
 	proxy?: string,
 	chunkSize: number = 6000
 ) => {
-	const chunks = chunkDiff(diff, chunkSize);
+    // Strategy: split by file first to avoid crossing file boundaries
+    const fileDiffs = splitDiffByFile(diff);
+    const perFileChunks = fileDiffs.flatMap(fd => chunkDiff(fd, chunkSize));
+    const chunks = perFileChunks.length > 0 ? perFileChunks : chunkDiff(diff, chunkSize);
 	
 	if (chunks.length === 1) {
 		try {
@@ -184,38 +223,90 @@ export const generateCommitMessageFromChunks = async (
 	// Multiple chunks - generate commit messages for each chunk
 	const chunkMessages: string[] = [];
 	
-	for (let i = 0; i < chunks.length; i++) {
+    for (let i = 0; i < chunks.length; i++) {
 		const chunk = chunks[i];
-		const chunkPrompt = `This is part ${i + 1} of ${chunks.length} of a large diff. 
-Please generate a commit message that describes the changes in this specific part.
-Focus on the most significant changes in this chunk.
+        const approxInputTokens = estimateTokenCount(chunk) + 1200; // reserve for prompt/system
+        let effectiveMaxTokens = Math.max(200, maxLength * 8);
+        // If close to model limit, reduce output tokens
+        if (approxInputTokens + effectiveMaxTokens > 7500) {
+            effectiveMaxTokens = Math.max(200, 7500 - approxInputTokens);
+        }
 
-${chunk}`;
+        const chunkPrompt = `Analyze this git diff and propose a concise commit message limited to ${maxLength} characters. Focus on the most significant intent of the change.\n\n${chunk}`;
 
 		try {
-			const messages = await generateCommitMessage(
+            const messages = await createChatCompletion(
 				apiKey,
 				model,
-				locale,
-				chunkPrompt,
-				1,
-				maxLength,
-				type,
-				timeout,
-				proxy
-			);
+                [
+                    { role: 'system', content: generatePrompt(locale, maxLength, type) },
+                    { role: 'user', content: chunkPrompt },
+                ],
+                0.7,
+                1,
+                0,
+                0,
+                effectiveMaxTokens,
+                1,
+                timeout,
+                proxy
+            );
 			
-			if (messages.length > 0) {
-				chunkMessages.push(messages[0]);
-			}
+            const texts = (messages.choices || [])
+                .map(c => c.message?.content)
+                .filter(Boolean) as string[];
+            if (texts.length > 0) {
+                chunkMessages.push(sanitizeMessage(texts[0]));
+            } else {
+                const reasons = (messages.choices as any[]).map((c:any)=>c.message?.reasoning || '').filter(Boolean) as string[];
+                if (reasons.length > 0) {
+                    const derived = deriveMessageFromReasoning(reasons[0], maxLength);
+                    if (derived) chunkMessages.push(derived);
+                }
+            }
 		} catch (error) {
 			console.warn(`Failed to process chunk ${i + 1}:`, error instanceof Error ? error.message : 'Unknown error');
 		}
 	}
 
-	if (chunkMessages.length === 0) {
-		throw new KnownError('Failed to generate commit messages for any chunks');
-	}
+    if (chunkMessages.length === 0) {
+        // Fallback: summarize per-file names only to craft a high-level message
+        const fileNames = splitDiffByFile(diff)
+            .map(block => {
+                const first = block.split('\n', 1)[0] || '';
+                const parts = first.split(' ');
+                return parts[2]?.replace('a/', '') || '';
+            })
+            .filter(Boolean)
+            .slice(0, 15);
+
+        const fallbackPrompt = `Generate a single, concise commit message (<= ${maxLength} chars) summarizing changes across these files:\n${fileNames.map(f => `- ${f}`).join('\n')}`;
+
+        try {
+            const completion = await createChatCompletion(
+                apiKey,
+                model,
+                [
+                    { role: 'system', content: generatePrompt(locale, maxLength, type) },
+                    { role: 'user', content: fallbackPrompt },
+                ],
+                0.7,
+                1,
+                0,
+                0,
+                Math.max(200, maxLength * 8),
+                1,
+                timeout,
+                proxy
+            );
+            const texts = (completion.choices || [])
+                .map(c => c.message?.content)
+                .filter(Boolean) as string[];
+            if (texts.length > 0) return [sanitizeMessage(texts[0])];
+        } catch {}
+
+        throw new KnownError('Failed to generate commit messages for any chunks');
+    }
 
 	// If we have multiple chunk messages, try to combine them intelligently
 	if (chunkMessages.length > 1) {

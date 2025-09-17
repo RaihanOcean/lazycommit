@@ -70,7 +70,7 @@ export const getDetectedMessage = (files: string[]) =>
 	}`;
 
 // Rough estimation: 1 token ≈ 4 characters for English text
-const estimateTokenCount = (text: string): number => {
+export const estimateTokenCount = (text: string): number => {
 	return Math.ceil(text.length / 4);
 };
 
@@ -153,4 +153,20 @@ export const getDiffSummary = async (excludeFiles?: string[]) => {
 		fileStats,
 		totalChanges: fileStats.reduce((sum, stat) => sum + stat.changes, 0)
 	};
+};
+
+export const splitDiffByFile = (diff: string): string[] => {
+	const parts: string[] = [];
+	let current = '';
+	const lines = diff.split('\n');
+	for (const line of lines) {
+		if (line.startsWith('diff --git ')) {
+			if (current.trim().length > 0) parts.push(current.trim());
+			current = line + '\n';
+		} else {
+			current += line + '\n';
+		}
+	}
+	if (current.trim().length > 0) parts.push(current.trim());
+	return parts;
 };
