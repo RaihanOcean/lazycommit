@@ -22,6 +22,19 @@
    npm install -g lazycommitt
    ```
 
+### Install via Homebrew (macOS)
+
+```sh
+brew tap kartiklabhshetwar/lazycommit
+brew install lazycommit
+```
+
+Upgrade:
+
+```sh
+brew upgrade lazycommit
+```
+
 2. Retrieve your API key from [Groq Console](https://console.groq.com/keys)
 
    > Note: If you haven't already, you'll have to create an account and get your API key.
