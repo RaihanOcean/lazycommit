@@ -9,13 +9,14 @@ import {
 	isCancel,
 } from '@clack/prompts';
 import {
-	assertGitRepo,
-	getStagedDiff,
-	getDetectedMessage,
-	getDiffSummary,
+    assertGitRepo,
+    getStagedDiff,
+    getDetectedMessage,
+    getDiffSummary,
+    buildCompactSummary,
 } from '../utils/git.js';
 import { getConfig } from '../utils/config.js';
-import { generateCommitMessageFromChunks } from '../utils/groq.js';
+import { generateCommitMessageFromChunks, generateCommitMessageFromSummary } from '../utils/groq.js';
 import { KnownError, handleCliError } from '../utils/error.js';
 
 export default async (
@@ -48,7 +49,7 @@ export default async (
 
 		// Check if diff is very large and show summary
 		const diffSummary = await getDiffSummary(excludeFiles);
-		const isLargeDiff = staged.diff.length > 50000; // ~12.5k tokens
+        const isLargeDiff = staged.diff.length > 50000; // ~12.5k chars (~3k tokens)
 
 		if (isLargeDiff && diffSummary) {
 			detectingFiles.stop(
@@ -75,20 +76,50 @@ export default async (
 
 		const s = spinner();
 		s.start('The AI is analyzing your changes');
-		let messages: string[];
+        let messages: string[];
 		try {
-			messages = await generateCommitMessageFromChunks(
-				config.GROQ_API_KEY,
-				config.model,
-				config.locale,
-				staged.diff,
-				config.generate,
-				config['max-length'],
-				config.type,
-				config.timeout,
-				config.proxy,
-				config['chunk-size']
-			);
+            if (isLargeDiff) {
+                const compact = await buildCompactSummary(excludeFiles, 25);
+                if (compact) {
+                    messages = await generateCommitMessageFromSummary(
+                        config.GROQ_API_KEY,
+                        config.model,
+                        config.locale,
+                        compact,
+                        config.generate,
+                        config['max-length'],
+                        config.type,
+                        config.timeout,
+                        config.proxy
+                    );
+                } else {
+                    messages = await generateCommitMessageFromChunks(
+                        config.GROQ_API_KEY,
+                        config.model,
+                        config.locale,
+                        staged.diff,
+                        config.generate,
+                        config['max-length'],
+                        config.type,
+                        config.timeout,
+                        config.proxy,
+                        config['chunk-size']
+                    );
+                }
+            } else {
+                messages = await generateCommitMessageFromChunks(
+                    config.GROQ_API_KEY,
+                    config.model,
+                    config.locale,
+                    staged.diff,
+                    config.generate,
+                    config['max-length'],
+                    config.type,
+                    config.timeout,
+                    config.proxy,
+                    config['chunk-size']
+                );
+            }
 		} finally {
 			s.stop('Changes analyzed');
 		}

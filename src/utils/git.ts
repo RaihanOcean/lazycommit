@@ -170,3 +170,31 @@ export const splitDiffByFile = (diff: string): string[] => {
 	if (current.trim().length > 0) parts.push(current.trim());
 	return parts;
 };
+
+export const buildCompactSummary = async (
+	excludeFiles?: string[],
+	maxFiles: number = 20
+) => {
+	const summary = await getDiffSummary(excludeFiles);
+	if (!summary) return null;
+	const { fileStats } = summary;
+	const sorted = [...fileStats].sort((a, b) => b.changes - a.changes);
+	const top = sorted.slice(0, Math.max(1, maxFiles));
+	const totalFiles = summary.files.length;
+	const totalChanges = summary.totalChanges;
+	const totalAdditions = fileStats.reduce((s, f) => s + (f.additions || 0), 0);
+	const totalDeletions = fileStats.reduce((s, f) => s + (f.deletions || 0), 0);
+
+	const lines: string[] = [];
+	lines.push(`Files changed: ${totalFiles}`);
+	lines.push(`Additions: ${totalAdditions}, Deletions: ${totalDeletions}, Total changes: ${totalChanges}`);
+	lines.push('Top files by changes:');
+	for (const f of top) {
+		lines.push(`- ${f.file} (+${f.additions} / -${f.deletions}, ${f.changes} changes)`);
+	}
+	if (sorted.length > top.length) {
+		lines.push(`…and ${sorted.length - top.length} more files`);
+	}
+
+	return lines.join('\n');
+};

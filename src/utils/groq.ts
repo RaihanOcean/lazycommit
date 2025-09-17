@@ -339,3 +339,50 @@ The message should be concise but cover the main aspects of all the changes.`;
 
 	return chunkMessages;
 };
+
+export const generateCommitMessageFromSummary = async (
+	apiKey: string,
+	model: string,
+	locale: string,
+	summary: string,
+	completions: number,
+	maxLength: number,
+	type: CommitType,
+	timeout: number,
+	proxy?: string
+) => {
+	const prompt = `This is a compact summary of staged changes. Generate a single, concise commit message within ${maxLength} characters that reflects the overall intent.\n\n${summary}`;
+	const completion = await createChatCompletion(
+		apiKey,
+		model,
+		[
+			{ role: 'system', content: generatePrompt(locale, maxLength, type) },
+			{ role: 'user', content: prompt },
+		],
+		0.7,
+		1,
+		0,
+		0,
+		Math.max(200, maxLength * 8),
+		completions,
+		timeout,
+		proxy
+	);
+
+	const messages = (completion.choices || [])
+		.map((c) => c.message?.content || '')
+		.map((t) => sanitizeMessage(t as string))
+		.filter(Boolean);
+
+	if (messages.length > 0) return deduplicateMessages(messages);
+
+	const reasons = (completion.choices as any[])
+		.map((c:any)=>c.message?.reasoning || '')
+		.filter(Boolean) as string[];
+	for (const r of reasons) {
+		const derived = deriveMessageFromReasoning(r, maxLength);
+		if (derived) return [derived];
+	}
+
+	return [];
+};
