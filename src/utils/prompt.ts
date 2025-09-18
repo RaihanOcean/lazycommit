@@ -63,21 +63,21 @@ export const generatePrompt = (
 ${commitTypes[type] ? `\n## Commit Type Guidelines:\n${commitTypes[type]}` : ''}
 
 ## Examples of good commit messages:
-- "feat: Add user authentication with JWT tokens"
-- "fix: Fix memory leak in image processing pipeline"
-- "refactor: Refactor database queries to use prepared statements"
-- "docs: Update README with installation instructions"
-- "style: Remove deprecated API endpoints"
-- "perf: Optimize bundle size by removing unused dependencies"
+- feat: Add user authentication with JWT tokens
+- fix: Fix memory leak in image processing pipeline
+- refactor: Refactor database queries to use prepared statements
+- docs: Update README with installation instructions
+- style: Remove deprecated API endpoints
+- perf: Optimize bundle size by removing unused dependencies
 
 ## Examples of bad commit messages:
-- "Update code"
-- "Fix bug"
-- "Changes"
-- "WIP"
-- "Stuff"
+- Update code
+- Fix bug
+- Changes
+- WIP
+- Stuff
 
-Remember: Your response will be used directly as the git commit message. Make it professional and informative.`;
+Remember: Your response will be used directly as the git commit message. Do NOT wrap the message in quotes. Make it professional and informative.`;
 
 	return basePrompt;
 };

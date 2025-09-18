@@ -91,6 +91,7 @@ const createChatCompletion = async (
 const sanitizeMessage = (message: string) =>
 	message
 		.trim()
+		.replace(/^["']|["']\.?$/g, '')
 		.replace(/[\n\r]/g, '')
 		.replace(/(\w)\.$/, '$1');
 
