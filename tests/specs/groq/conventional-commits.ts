@@ -1,5 +1,5 @@
 import { expect, testSuite } from 'manten';
-import { generateCommitMessage } from '../../../src/utils/groq.js';
+import { generateCommitMessageFromSummary } from '../../../src/utils/groq.js';
 import type { ValidConfig } from '../../../src/utils/config.js';
 import { getDiff } from '../../utils.js';
 
@@ -138,9 +138,9 @@ export default testSuite(({ describe }) => {
 				'max-length': 50,
 				...configOverrides,
 			} as ValidConfig;
-			const commitMessages = await generateCommitMessage(
+			const commitMessages = await generateCommitMessageFromSummary(
 				GROQ_API_KEY!,
-				'openai/gpt-oss-120b',
+				'llama-3.1-8b-instant',
 				config.locale,
 				gitDiff,
 				config.generate,
