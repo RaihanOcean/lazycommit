@@ -77,7 +77,7 @@ body:
       description: |
         Please share your Groq API configuration (remove sensitive data):
       placeholder: |
-        Model: openai/gpt-oss-120b
+        Model: llama-3.1-8b-instant
         Type: conventional
         Max length: 50
         Locale: en
