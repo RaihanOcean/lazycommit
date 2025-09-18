@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import { intro, outro, spinner } from '@clack/prompts';
 import { black, green, red, bgCyan } from 'kolorist';
-import { getStagedDiff } from '../utils/git.js';
+import { getStagedDiff, buildCompactSummary } from '../utils/git.js';
 import { getConfig } from '../utils/config.js';
-import { generateCommitMessage } from '../utils/groq.js';
+import { generateCommitMessageFromSummary } from '../utils/groq.js';
 import { KnownError, handleCliError } from '../utils/error.js';
 
 const [messageFilePath, commitSource] = process.argv.slice(2);
@@ -40,17 +40,35 @@ export default () =>
 		s.start('The AI is analyzing your changes');
 		let messages: string[];
 		try {
-			messages = await generateCommitMessage(
-				config.GROQ_API_KEY,
-				config.model,
-				config.locale,
-				staged!.diff,
-				config.generate,
-				config['max-length'],
-				config.type,
-				config.timeout,
-				config.proxy
-			);
+			const compact = await buildCompactSummary();
+			if (compact) {
+				messages = await generateCommitMessageFromSummary(
+					config.GROQ_API_KEY,
+					config.model,
+					config.locale,
+					compact,
+					config.generate,
+					config['max-length'],
+					config.type,
+					config.timeout,
+					config.proxy
+				);
+			} else {
+				// Fallback to simple file list if summary fails
+				const fileList = staged!.files.join(', ');
+				const fallbackPrompt = `Generate a commit message for these files: ${fileList}`;
+				messages = await generateCommitMessageFromSummary(
+					config.GROQ_API_KEY,
+					config.model,
+					config.locale,
+					fallbackPrompt,
+					config.generate,
+					config['max-length'],
+					config.type,
+					config.timeout,
+					config.proxy
+				);
+			}
 		} finally {
 			s.stop('Changes analyzed');
 		}

@@ -49,6 +49,12 @@ cli(
 				description: 'Type of commit message to generate',
 				alias: 't',
 			},
+			split: {
+				type: Boolean,
+				description: 'Create multiple commits by grouping files logically',
+				alias: 's',
+				default: false,
+			},
 		},
 
 		commands: [configCommand, hookCommand],
@@ -68,6 +74,7 @@ cli(
 				argv.flags.exclude,
 				argv.flags.all,
 				argv.flags.type,
+				argv.flags.split,
 				rawArgv
 			);
 		}
