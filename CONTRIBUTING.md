@@ -246,9 +246,10 @@ pnpm dlx 'KartikLabhshetwar/lazycommit#npm/develop'
 ### Key files
 
 - `src/cli.ts` - Main CLI entry point using cleye
-- `src/commands/lazycommit.ts` - Core commit message generation logic
-- `src/utils/groq.ts` - Groq API integration
+- `src/commands/lazycommit.ts` - Core commit message generation with smart grouping logic
+- `src/utils/groq.ts` - Groq API integration with retry/fallback mechanisms
 - `src/utils/config.ts` - Configuration management
+- `src/utils/git.ts` - Git operations and file analysis utilities
 - `package.json` - Project configuration and dependencies
 - `tsconfig.json` - TypeScript configuration
 
@@ -267,6 +268,14 @@ pnpm dlx 'KartikLabhshetwar/lazycommit#npm/develop'
 2. Bundling with pkgroll
 3. Adding Node.js hashbang for executable
 4. Output to `dist/cli.mjs`
+
+### Architecture highlights
+
+- **Smart file grouping**: Automatically groups files by conventional commit types and scopes
+- **Token-safe AI integration**: Uses compact git summaries instead of full diffs to avoid rate limits
+- **Retry mechanisms**: Exponential backoff and model fallback for robust API handling
+- **Multi-commit workflow**: Creates logical, atomic commits for large changes
+- **Enhanced file classification**: Context-aware file type detection using git patterns
 
 ## Getting help
 

@@ -109,14 +109,33 @@ You can exclude specific files from AI analysis using the `--exclude` flag:
 lazycommit --exclude package-lock.json --exclude dist/
 ```
 
+#### Automatic multi-commit mode
+
+When you stage many files, `lazycommit` can automatically split your changes into logical groups and create multiple commits with proper Conventional Commit messages.
+
+- Auto-trigger: when staged files ≥ 5, or when the diff is large
+- Grouping: buckets by type/scope (e.g., `feat(api)`, `docs`, `ci`, `build`, `test`, `chore`)
+- Deep split: if everything falls into one big bucket (e.g., `app/api/*`), it auto-splits by second-level directory (like `analytics`, `projects`, `sessions`)
+- Token-safe AI: each group uses a compact `git diff --cached --numstat` summary (not full diffs) to generate the commit line
+
+Usage:
+
+```sh
+# Just run as usual; grouping triggers automatically when applicable
+lazycommit
+
+# Force grouping even for < 5 files
+lazycommit --split
+```
+
 #### Handling large diffs
 
-For large commits with many files, lazycommit automatically stays within API limits:
+For large commits with many files, lazycommit automatically stays within API limits and maintains clean history:
 
-- **Automatic detection**: Large diffs are detected
-- **Per-file splitting**: Diffs are split by file first
-- **Safe chunking**: Each file diff is chunked conservatively (default: 4000 tokens)
-- **Combination**: Results are combined into one concise message
+- **Automatic detection**: Large diffs and many-file changes are detected
+- **Logical grouping**: Files are grouped into conventional buckets; single huge buckets are auto-split by second-level directory (e.g., `app/api/<group>/...`)
+- **Token-safe summaries**: Each group sends a small `--numstat` summary to AI instead of full diffs
+- **Sequential commits**: In multi-commit mode, groups are committed one-by-one with their own messages
 
 ### Git hook
 
@@ -229,7 +248,14 @@ lazycommit config set proxy=
 
 #### model
 
-Default: `openai/gpt-oss-120b`
+Default: `llama-3.1-8b-instant`
+
+The Groq model to use for generating commit messages. Available models include:
+- `llama-3.1-8b-instant` (default) - Fast, efficient for conventional commits
+- `llama-3.1-70b-versatile` - More detailed but slower
+- `llama-3.1-120b-versatile` - Most capable but slowest
+
+For conventional commit generation, the 8B instant model provides the best balance of speed and quality.
 
 #### timeout
 
@@ -267,17 +293,6 @@ You can clear this option by setting it to an empty string:
 lazycommit config set type=
 ```
 
-#### chunk-size
-
-Default: `4000`
-
-The maximum number of tokens per chunk when processing large diffs. This helps avoid API limits and keeps requests fast:
-
-```sh
-lazycommit config set chunk-size 4000
-```
-
-**Note**: Must be between 1000-8000 tokens (Groq API limit).
 
 ## How it works
 
@@ -289,12 +304,13 @@ The tool uses Groq's fast inference API to provide quick and accurate commit mes
 
 For large commits that exceed API token limits, lazycommit automatically:
 
-1. **Splits by file** to avoid oversized requests
-2. **Chunks each file** into manageable pieces (default: 4000 tokens)
-3. **Processes chunks** and combines results into a single message
-4. **Falls back gracefully** to a high-level summary if needed
+1. **Detects large/many-file diffs** and switches to a scalable flow
+2. **Groups files** by conventional type/scope; if only one large bucket remains, **auto-splits by second-level directory** (e.g., `app/api/<group>/...`)
+3. **Generates messages per group** using compact `git diff --cached --numstat` summaries (not full diffs)
+4. **Commits sequentially** per group with clear, conventional messages
+5. When a single commit is requested, **uses compact summaries** to generate conventional messages efficiently
 
-This ensures you can commit large changes (like new features, refactoring, or initial project setup) without hitting API limits.
+This ensures you can commit large changes (like new features, refactoring, or initial project setup) without hitting API limits, while keeping a clean history.
 
 ## Troubleshooting
 
@@ -307,17 +323,12 @@ If you get a 413 error, your diff is too large for the API. Try these solutions:
    lazycommit --exclude "dist/**" --exclude "node_modules/**" --exclude ".next/**"
    ```
 
-2. **Reduce chunk size**:
-   ```sh
-   lazycommit config set chunk-size 4000
-   ```
-
-3. **Use a different model**:
+2. **Use a different model**:
    ```sh
    lazycommit config set model "llama-3.1-70b-versatile"
    ```
 
-4. **Commit in smaller batches**:
+3. **Commit in smaller batches**:
    ```sh
    git add src/  # Stage only source files
    lazycommit
@@ -329,19 +340,23 @@ If you get a 413 error, your diff is too large for the API. Try these solutions:
 
 - Check your API key: `lazycommit config get GROQ_API_KEY`
 - Verify you have staged changes: `git status`
-- Try reducing chunk size or excluding large files
+- Try excluding large files or using a different model
 
 ### Slow performance with large diffs
 
-- Reduce chunk size: `lazycommit config set chunk-size 4000`
+- **Use the 8B instant model** (default): `lazycommit config set model "llama-3.1-8b-instant"`
 - Exclude unnecessary files: `lazycommit --exclude "*.log" --exclude "*.tmp"`
+- Use automatic multi-commit mode to split large changes into logical groups
+- Lower generate count: `lazycommit config set generate=1` (default)
+- Reduce timeout: `lazycommit config set timeout=5000` for faster failures
 
 ## Why Groq?
 
-- **Fast**: Groq provides ultra-fast inference speeds
--  **Cost-effective**: More affordable than traditional AI APIs
--  **Open source models**: Uses leading open-source language models
--  **Reliable**: High uptime and consistent performance
+- **Fast**: Groq provides ultra-fast inference speeds, especially with the 8B instant model
+- **Cost-effective**: More affordable than traditional AI APIs
+- **Open source models**: Uses leading open-source language models
+- **Reliable**: High uptime and consistent performance
+- **Optimized for commits**: The 8B instant model is perfectly sized for conventional commit generation
 
 ## Maintainers
 
