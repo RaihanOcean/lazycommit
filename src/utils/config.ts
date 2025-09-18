@@ -80,7 +80,7 @@ const configParsers = {
 	},
 	model(model?: string) {
 		if (!model || model.length === 0) {
-			return 'llama-3.1-8b-instant';
+			return 'llama-3.3-70b-versatile';
 		}
 
 		return model;

@@ -140,7 +140,7 @@ export default testSuite(({ describe }) => {
 			} as ValidConfig;
 			const commitMessages = await generateCommitMessageFromSummary(
 				GROQ_API_KEY!,
-				'llama-3.1-8b-instant',
+				'llama-3.3-70b-versatile',
 				config.locale,
 				gitDiff,
 				config.generate,
