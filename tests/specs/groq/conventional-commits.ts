@@ -140,7 +140,7 @@ export default testSuite(({ describe }) => {
 			} as ValidConfig;
 			const commitMessages = await generateCommitMessageFromSummary(
 				GROQ_API_KEY!,
-				'llama-3.3-70b-versatile',
+				'openai/gpt-oss-20b',
 				config.locale,
 				gitDiff,
 				config.generate,

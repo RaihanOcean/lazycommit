@@ -80,7 +80,7 @@ const configParsers = {
 	},
 	model(model?: string) {
 		if (!model || model.length === 0) {
-			return 'llama-3.3-70b-versatile';
+			return 'openai/gpt-oss-20b';
 		}
 
 		return model;

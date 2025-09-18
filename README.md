@@ -248,11 +248,10 @@ lazycommit config set proxy=
 
 #### model
 
-Default: `llama-3.3-70b-versatile`
+Default: `openai/gpt-oss-20b`
 
 The Groq model to use for generating commit messages. Available models include:
-- `llama-3.3-70b-versatile` (default) - Fast, efficient for conventional commits
-- `llama-3.1-120b-versatile` - Most capable but slowest
+- `openai/gpt-oss-20b` (default) - Fast, efficient for conventional commits
 
 For conventional commit generation, the 8B instant model provides the best balance of speed and quality.
 
@@ -343,7 +342,7 @@ If you get a 413 error, your diff is too large for the API. Try these solutions:
 
 ### Slow performance with large diffs
 
-- **Use the 8B instant model** (default): `lazycommit config set model "llama-3.3-70b-versatile"`
+- **Use the GPT-OSS-20B model** (default): `lazycommit config set model "openai/gpt-oss-20b"`
 - Exclude unnecessary files: `lazycommit --exclude "*.log" --exclude "*.tmp"`
 - Use automatic multi-commit mode to split large changes into logical groups
 - Lower generate count: `lazycommit config set generate=1` (default)
