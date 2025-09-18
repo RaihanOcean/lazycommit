@@ -80,7 +80,7 @@ const configParsers = {
 	},
 	model(model?: string) {
 		if (!model || model.length === 0) {
-			return 'openai/gpt-oss-120b';
+			return 'llama-3.1-8b-instant';
 		}
 
 		return model;
@@ -109,27 +109,6 @@ const configParsers = {
 			'max-length',
 			parsed >= 20,
 			'Must be greater than 20 characters'
-		);
-
-		return parsed;
-	},
-	'chunk-size'(chunkSize?: string) {
-		if (!chunkSize) {
-			return 4000;
-		}
-
-		parseAssert('chunk-size', /^\d+$/.test(chunkSize), 'Must be an integer');
-
-		const parsed = Number(chunkSize);
-		parseAssert(
-			'chunk-size',
-			parsed >= 1000,
-			'Must be at least 1000 tokens'
-		);
-		parseAssert(
-			'chunk-size',
-			parsed <= 8000,
-			'Must be at most 8000 tokens (Groq limit)'
 		);
 
 		return parsed;
