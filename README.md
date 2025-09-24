@@ -101,6 +101,27 @@ lazycommit --type conventional # or -t conventional
 
 This feature can be useful if your project follows the Conventional Commits standard or if you're using tools that rely on this commit format.
 
+#### Review, edit, and confirm messages
+
+Lazycommit now lets you review the generated message, optionally edit it, and then confirm before it is committed.
+
+- **Single commit**:
+  - You’ll see a menu: Use as-is, Edit, or Cancel
+  - If you choose Edit, you can modify the message; then you’ll be asked to confirm the final message before committing
+- **Multi-commit**:
+  - For each group, you can optionally edit the message
+  - You will then be asked to confirm the final message for that group before it commits
+
+Example (single commit):
+
+```sh
+git add .
+lazycommit
+# Review generated commit message:
+#   feat: Add lazycommit command
+# → Choose "Edit" to modify, then confirm the final message before commit
+```
+
 #### Exclude files from analysis
 
 You can exclude specific files from AI analysis using the `--exclude` flag:
