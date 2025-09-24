@@ -285,7 +285,6 @@ export default async (
 			useAsIs = true;
 		}
 
-		// Offer editing of the final commit message (skip if user chose 'Use as-is' or already edited)
 		if (!useAsIs && !editedAlready) {
 			const wantsEdit = await confirm({ message: 'Edit the commit message before committing?' });
 			if (wantsEdit && !isCancel(wantsEdit)) {
