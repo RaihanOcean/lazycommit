@@ -255,7 +255,6 @@ export default async (
 			}
 
 			if (choice === 'use') {
-				// User chose to use as-is, no need for further editing
 				editedAlready = true;
 			} else if (choice === 'edit') {
 				const edited = await text({
