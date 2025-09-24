@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import { intro, outro, spinner } from '@clack/prompts';
 import { black, green, red, bgCyan } from 'kolorist';
 import { getStagedDiff, buildCompactSummary } from '../utils/git.js';
+import { buildSingleCommitPrompt } from './lazycommit.js';
 import { getConfig } from '../utils/config.js';
 import { generateCommitMessageFromSummary } from '../utils/groq.js';
 import { KnownError, handleCliError } from '../utils/error.js';
@@ -42,11 +43,12 @@ export default () =>
 		try {
 			const compact = await buildCompactSummary();
 			if (compact) {
+				const enhanced = await buildSingleCommitPrompt(staged.files, compact, config['max-length']);
 				messages = await generateCommitMessageFromSummary(
 					config.GROQ_API_KEY,
 					config.model,
 					config.locale,
-					compact,
+					enhanced,
 					config.generate,
 					config['max-length'],
 					config.type,
@@ -56,7 +58,7 @@ export default () =>
 			} else {
 				// Fallback to simple file list if summary fails
 				const fileList = staged!.files.join(', ');
-				const fallbackPrompt = `Generate a commit message for these files: ${fileList}`;
+				const fallbackPrompt = await buildSingleCommitPrompt(staged.files, `Files: ${fileList}`, config['max-length']);
 				messages = await generateCommitMessageFromSummary(
 					config.GROQ_API_KEY,
 					config.model,

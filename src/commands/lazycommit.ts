@@ -66,7 +66,7 @@ const buildDiffSnippets = async (
     }
 };
 
-const buildSingleCommitPrompt = async (
+export const buildSingleCommitPrompt = async (
     files: string[],
     compactSummary: string,
     maxLength: number
@@ -238,6 +238,7 @@ export default async (
 
 		let message: string;
 		let editedAlready = false;
+		let useAsIs = false;
 		if (messages.length === 1) {
 			[message] = messages;
 			const choice = await select({
@@ -255,7 +256,7 @@ export default async (
 			}
 
 			if (choice === 'use') {
-				editedAlready = true;
+				useAsIs = true;
 			} else if (choice === 'edit') {
 				const edited = await text({
 					message: 'Edit commit message:',
@@ -281,12 +282,11 @@ export default async (
 			}
 
 			message = selected as string;
-			// User selected a message, no need for further editing
-			editedAlready = true;
+			useAsIs = true;
 		}
 
-		// Offer editing of the final commit message (skip if already edited)
-		if (!editedAlready) {
+		// Offer editing of the final commit message (skip if user chose 'Use as-is' or already edited)
+		if (!useAsIs && !editedAlready) {
 			const wantsEdit = await confirm({ message: 'Edit the commit message before committing?' });
 			if (wantsEdit && !isCancel(wantsEdit)) {
 				const edited = await text({
@@ -299,16 +299,19 @@ export default async (
 					return;
 				}
 				message = String(edited).trim();
+				editedAlready = true;
 			}
 		}
 
-		// Final proceed confirmation displaying the message
-		const proceed = await confirm({
-			message: `Proceed with this commit message?\n\n   ${message}\n`,
-		});
-		if (!proceed || isCancel(proceed)) {
-			outro('Commit cancelled');
-			return;
+		// Final proceed confirmation displaying the message (skip if user chose 'Use as-is')
+		if (!useAsIs) {
+			const proceed = await confirm({
+				message: `Proceed with this commit message?\n\n   ${message}\n`,
+			});
+			if (!proceed || isCancel(proceed)) {
+				outro('Commit cancelled');
+				return;
+			}
 		}
 
 		await execa('git', ['commit', '-m', message, ...rawArgv]);

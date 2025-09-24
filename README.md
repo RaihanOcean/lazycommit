@@ -138,7 +138,7 @@ For large commits with many files, lazycommit automatically stays within API lim
 
 ### Git hook
 
-You can also integrate _lazycommit_ with Git via the [`prepare-commit-msg`](https://git-scm.com/docs/githooks#_prepare_commit_msg) hook. This lets you use Git like you normally would, and edit the commit message before committing.
+You can also integrate _lazycommit_ with Git via the [`prepare-commit-msg`](https://git-scm.com/docs/githooks#_prepare_commit_msg) hook. This lets you use Git like you normally would, and edit the commit message before committing. The hook uses the same enhanced analysis and quality improvements as the CLI mode.
 
 #### Install
 
@@ -167,7 +167,7 @@ lazycommit hook uninstall
 
    > If you ever want to write your own message instead of generating one, you can simply pass one in: `git commit -m "My message"`
 
-2. Lazycommit will generate the commit message for you and pass it back to Git. Git will open it with the [configured editor](https://docs.github.com/en/get-started/getting-started-with-git/associating-text-editors-with-git) for you to review/edit it.
+2. Lazycommit will generate a high-quality commit message using the same enhanced analysis as the CLI mode and pass it back to Git. Git will open it with the [configured editor](https://docs.github.com/en/get-started/getting-started-with-git/associating-text-editors-with-git) for you to review/edit it.
 
 3. Save and close the editor to commit!
 
