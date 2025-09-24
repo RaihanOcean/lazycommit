@@ -254,7 +254,10 @@ export default async (
 				return;
 			}
 
-			if (choice === 'edit') {
+			if (choice === 'use') {
+				// User chose to use as-is, no need for further editing
+				editedAlready = true;
+			} else if (choice === 'edit') {
 				const edited = await text({
 					message: 'Edit commit message:',
 					initialValue: message,
@@ -279,6 +282,8 @@ export default async (
 			}
 
 			message = selected as string;
+			// User selected a message, no need for further editing
+			editedAlready = true;
 		}
 
 		// Offer editing of the final commit message (skip if already edited)
