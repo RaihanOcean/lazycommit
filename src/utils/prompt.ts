@@ -13,23 +13,27 @@ const commitTypes: Record<CommitType, string> = {
 
 ${JSON.stringify(
 		{
-			feat: 'A new feature for the user',
-			fix: 'A bug fix',
-			docs: 'Documentation only changes',
+			feat: 'A NEW user-facing feature or functionality that adds capabilities',
+			fix: 'A bug fix that resolves an existing issue',
+			docs: 'Documentation only changes (README, comments, etc)',
 			style: 'Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)',
-			refactor: 'A code change that neither fixes a bug nor adds a feature',
+			refactor: 'Code restructuring, improvements, or internal changes that enhance existing functionality',
 			perf: 'A code change that improves performance',
 			test: 'Adding missing tests or correcting existing tests',
 			build: 'Changes that affect the build system or external dependencies',
 			ci: 'Changes to our CI configuration files and scripts',
-			chore: "Other changes that don't modify src or test files",
+			chore: 'Maintenance tasks, config updates, dependency updates, or internal tooling changes',
 			revert: 'Reverts a previous commit',
 		},
 		null,
 		2
 	)}
 
-IMPORTANT: Use the exact type name from the list above.`,
+IMPORTANT: 
+- Use 'feat' ONLY for NEW user-facing features
+- Use 'refactor' for code improvements, restructuring, or internal changes
+- Use 'chore' for config updates, maintenance, or internal tooling
+- Use the exact type name from the list above.`,
 };
 
 export const generatePrompt = (
@@ -37,47 +41,55 @@ export const generatePrompt = (
 	maxLength: number,
 	type: CommitType
 ) => {
-	const basePrompt = `You are an expert software engineer and git commit message writer. Your task is to analyze git diffs and generate clear, concise, and professional commit messages.
+	const basePrompt = `You are a professional git commit message generator. Generate ONLY conventional commit messages.
 
-## Instructions:
-1. Analyze the provided git diff carefully
-2. Identify the primary purpose and impact of the changes
-3. Generate a commit message that clearly describes what was changed and why
-4. Use present tense, imperative mood (e.g., "feat: Add feature" not "Added feature")
-5. Be specific about what changed, not just how it changed
-6. Focus on the business value or technical improvement
+CRITICAL RULES:
+- Return ONLY the commit message line, nothing else
+- Use format: type: subject (NO scope, just type and subject)
+- Maximum ${maxLength} characters (be concise but complete)
+- Imperative mood, present tense
+- Be specific and descriptive
+- NO explanations, questions, or meta-commentary
+- ALWAYS complete the message - never truncate mid-sentence
 
-## Quality Guidelines:
-- Be concise but descriptive
-- Use active voice
-- Avoid vague terms like "update", "change", "fix stuff"
-- Include context when helpful (e.g., "fix: memory leak in user authentication")
-- For bug fixes, briefly describe what was broken
-- For features, describe what functionality was added
-- For refactoring, mention what was improved (performance, readability, etc.)
+COMMIT TYPES:
+- feat: NEW user-facing feature or functionality
+- fix: bug fix that resolves an issue
+- docs: documentation changes only
+- style: formatting, no logic change
+- refactor: code restructuring, improvements, or internal changes
+- perf: performance improvements
+- test: adding/updating tests
+- build: build system changes
+- ci: CI/CD changes
+- chore: maintenance tasks, dependencies, config updates
 
-## Language: ${locale}
-## Maximum length: ${maxLength} characters
-## Output format: ${commitTypeFormats[type] || '<commit message>'}
+QUALITY GUIDELINES:
+- Start with the most important change
+- Use specific, descriptive language
+- Include the main component/area affected
+- Be clear about what was done, not just what files changed
+- Use proper grammar and punctuation
 
-${commitTypes[type] ? `\n## Commit Type Guidelines:\n${commitTypes[type]}` : ''}
+EXAMPLES (correct format - NO scope, just type and subject):
+- feat: add user login with OAuth integration
+- fix: resolve memory leak in image processing service
+- refactor: improve message generation with better prompts
+- refactor: increase default max-length from 50 to 100
+- docs: update installation and configuration guide
+- test: add unit tests for JWT token validation
+- chore: update axios to v1.6.0 for security patches
 
-## Examples of good commit messages:
-- feat: Add user authentication with JWT tokens
-- fix: Fix memory leak in image processing pipeline
-- refactor: Refactor database queries to use prepared statements
-- docs: Update README with installation instructions
-- style: Remove deprecated API endpoints
-- perf: Optimize bundle size by removing unused dependencies
+WRONG FORMAT (do not use):
+- feat(auth): add user login
+- refactor(commit): improve prompts
 
-## Examples of bad commit messages:
-- Update code
-- Fix bug
-- Changes
-- WIP
-- Stuff
+${commitTypes[type] ? `\nDETAILED TYPE GUIDELINES:\n${commitTypes[type]}` : ''}
 
-Remember: Your response will be used directly as the git commit message. Do NOT wrap the message in quotes. Make it professional and informative.`;
+Language: ${locale}
+Output format: ${commitTypeFormats[type] || 'type: subject'}
+
+Generate a single, complete, professional commit message that accurately describes the changes.`;
 
 	return basePrompt;
 };

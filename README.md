@@ -105,12 +105,8 @@ This feature can be useful if your project follows the Conventional Commits stan
 
 Lazycommit now lets you review the generated message, optionally edit it, and then confirm before it is committed.
 
-- **Single commit**:
-  - You’ll see a menu: Use as-is, Edit, or Cancel
-  - If you choose Edit, you can modify the message; then you’ll be asked to confirm the final message before committing
-- **Multi-commit**:
-  - For each group, you can optionally edit the message
-  - You will then be asked to confirm the final message for that group before it commits
+- You'll see a menu: Use as-is, Edit, or Cancel
+- If you choose Edit, you can modify the message; then you'll be asked to confirm the final message before committing
 
 Example (single commit):
 
@@ -130,33 +126,15 @@ You can exclude specific files from AI analysis using the `--exclude` flag:
 lazycommit --exclude package-lock.json --exclude dist/
 ```
 
-#### Automatic multi-commit mode
-
-When you stage many files, `lazycommit` can automatically split your changes into logical groups and create multiple commits with proper Conventional Commit messages.
-
-- Auto-trigger: when staged files ≥ 5, or when the diff is large
-- Grouping: buckets by type/scope (e.g., `feat(api)`, `docs`, `ci`, `build`, `test`, `chore`)
-- Deep split: if everything falls into one big bucket (e.g., `app/api/*`), it auto-splits by second-level directory (like `analytics`, `projects`, `sessions`)
-- Token-safe AI: each group uses a compact `git diff --cached --numstat` summary (not full diffs) to generate the commit line
-
-Usage:
-
-```sh
-# Just run as usual; grouping triggers automatically when applicable
-lazycommit
-
-# Force grouping even for < 5 files
-lazycommit --split
-```
-
 #### Handling large diffs
 
-For large commits with many files, lazycommit automatically stays within API limits and maintains clean history:
+For large commits with many files, lazycommit automatically stays within API limits and generates relevant commit messages:
 
-- **Automatic detection**: Large diffs and many-file changes are detected
-- **Logical grouping**: Files are grouped into conventional buckets; single huge buckets are auto-split by second-level directory (e.g., `app/api/<group>/...`)
-- **Token-safe summaries**: Each group sends a small `--numstat` summary to AI instead of full diffs
-- **Sequential commits**: In multi-commit mode, groups are committed one-by-one with their own messages
+- **Smart summarization**: Uses `git diff --cached --numstat` to create compact summaries of all changes
+- **Context snippets**: Includes truncated diff snippets from top changed files for better context
+- **Token-safe processing**: Keeps prompts small while maintaining accuracy for 20+ file changes
+- **Single commit**: Always generates one commit message, no matter how many files are staged
+- **Enhanced analysis**: Uses improved prompts and smart truncation for better commit message quality
 
 ### Git hook
 
@@ -290,10 +268,10 @@ lazycommit config set timeout=20000 # 20s
 
 The maximum character length of the generated commit message.
 
-Default: `50`
+Default: `100`
 
 ```sh
-lazycommit config set max-length=100
+lazycommit config set max-length=150
 ```
 
 #### type
@@ -323,13 +301,14 @@ The tool uses Groq's fast inference API to provide quick and accurate commit mes
 
 For large commits that exceed API token limits, lazycommit automatically:
 
-1. **Detects large/many-file diffs** and switches to a scalable flow
-2. **Groups files** by conventional type/scope; if only one large bucket remains, **auto-splits by second-level directory** (e.g., `app/api/<group>/...`)
-3. **Generates messages per group** using compact `git diff --cached --numstat` summaries (not full diffs)
-4. **Commits sequentially** per group with clear, conventional messages
-5. When a single commit is requested, **uses compact summaries** to generate conventional messages efficiently
+1. **Detects large/many-file diffs** and switches to enhanced analysis mode
+2. **Creates compact summaries** using `git diff --cached --numstat` to capture all changes efficiently
+3. **Includes context snippets** from the most changed files to provide semantic context
+4. **Generates a single commit message** that accurately reflects all changes without hitting API limits
+5. **Smart truncation** preserves sentence structure and meaning when messages approach length limits
+6. **Enhanced prompts** provide better context for AI to generate complete, professional commit messages
 
-This ensures you can commit large changes (like new features, refactoring, or initial project setup) without hitting API limits, while keeping a clean history.
+This ensures you can commit large changes (like new features, refactoring, or initial project setup) without hitting API limits, while maintaining accuracy, relevance, and high-quality commit messages.
 
 ## Troubleshooting
 
@@ -365,7 +344,7 @@ If you get a 413 error, your diff is too large for the API. Try these solutions:
 
 - **Use the GPT-OSS-20B model** (default): `lazycommit config set model "openai/gpt-oss-20b"`
 - Exclude unnecessary files: `lazycommit --exclude "*.log" --exclude "*.tmp"`
-- Use automatic multi-commit mode to split large changes into logical groups
+- Use the built-in large diff handling for better context and accuracy
 - Lower generate count: `lazycommit config set generate=1` (default)
 - Reduce timeout: `lazycommit config set timeout=5000` for faster failures
 

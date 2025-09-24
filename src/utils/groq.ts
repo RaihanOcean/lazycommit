@@ -95,6 +95,47 @@ const sanitizeMessage = (message: string) =>
 		.replace(/[\n\r]/g, '')
 		.replace(/(\w)\.$/, '$1');
 
+const enforceMaxLength = (message: string, maxLength: number): string => {
+    if (message.length <= maxLength) return message;
+    
+    // Try to find a good breaking point that preserves meaning
+    const cut = message.slice(0, maxLength);
+    
+    // Look for sentence endings first (., !, ?)
+    const sentenceEnd = Math.max(
+        cut.lastIndexOf('. '),
+        cut.lastIndexOf('! '),
+        cut.lastIndexOf('? ')
+    );
+    
+    if (sentenceEnd > maxLength * 0.7) {
+        return cut.slice(0, sentenceEnd + 1);
+    }
+    
+    // Look for comma or semicolon as secondary break point
+    const clauseEnd = Math.max(
+        cut.lastIndexOf(', '),
+        cut.lastIndexOf('; ')
+    );
+    
+    if (clauseEnd > maxLength * 0.6) {
+        return cut.slice(0, clauseEnd + 1);
+    }
+    
+    // Fall back to word boundary
+    const lastSpace = cut.lastIndexOf(' ');
+    if (lastSpace > maxLength * 0.5) {
+        return cut.slice(0, lastSpace);
+    }
+    
+    // Last resort: hard cut but add ellipsis if it seems incomplete
+    if (message.length > maxLength + 10) {
+        return cut + '...';
+    }
+    
+    return cut;
+};
+
 const deduplicateMessages = (array: string[]) => Array.from(new Set(array));
 
 const conventionalPrefixes = [
@@ -103,9 +144,19 @@ const conventionalPrefixes = [
 
 const deriveMessageFromReasoning = (text: string, maxLength: number): string | null => {
     const cleaned = text.replace(/\s+/g, ' ').trim();
+    
     // Try to find a conventional-style line inside reasoning
     const match = cleaned.match(/\b(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)\b\s*:?\s+[^.\n]+/i);
     let candidate = match ? match[0] : cleaned.split(/[.!?]/)[0];
+    
+    // If no conventional prefix found, try to extract a meaningful sentence
+    if (!match && candidate.length < 10) {
+        const sentences = cleaned.split(/[.!?]/).filter(s => s.trim().length > 10);
+        if (sentences.length > 0) {
+            candidate = sentences[0].trim();
+        }
+    }
+    
     // Ensure prefix formatting: if starts with a known type w/o colon, add colon
     const lower = candidate.toLowerCase();
     for (const prefix of conventionalPrefixes) {
@@ -115,9 +166,15 @@ const deriveMessageFromReasoning = (text: string, maxLength: number): string | n
             break;
         }
     }
+    
     candidate = sanitizeMessage(candidate);
-    if (!candidate) return null;
-    if (candidate.length > maxLength) candidate = candidate.slice(0, maxLength);
+    if (!candidate || candidate.length < 5) return null;
+    
+    // Only enforce max length if it's significantly over
+    if (candidate.length > maxLength * 1.2) {
+        candidate = enforceMaxLength(candidate, maxLength);
+    }
+    
     return candidate;
 };
 
@@ -133,7 +190,7 @@ export const generateCommitMessageFromSummary = async (
 	timeout: number,
 	proxy?: string
 ) => {
-	const prompt = `This is a compact summary of staged changes. Generate a single, concise commit message within ${maxLength} characters that reflects the overall intent.\n\n${summary}`;
+	const prompt = summary;
 	const completion = await createChatCompletion(
 		apiKey,
 		model,
@@ -141,20 +198,28 @@ export const generateCommitMessageFromSummary = async (
 			{ role: 'system', content: generatePrompt(locale, maxLength, type) },
 			{ role: 'user', content: prompt },
 		],
-		0.7,
+		0.3, // Lower temperature for more consistent, focused responses
 		1,
 		0,
 		0,
-		Math.max(200, maxLength * 8),
+		Math.max(300, maxLength * 12),
 		completions,
 		timeout,
 		proxy
 	);
 
-	const messages = (completion.choices || [])
-		.map((c) => c.message?.content || '')
-		.map((t) => sanitizeMessage(t as string))
-		.filter(Boolean);
+    const messages = (completion.choices || [])
+        .map((c) => c.message?.content || '')
+        .map((t) => sanitizeMessage(t as string))
+        .filter(Boolean)
+        .map((t) => {
+            // Only enforce max length if significantly over limit
+            if (t.length > maxLength * 1.1) {
+                return enforceMaxLength(t, maxLength);
+            }
+            return t;
+        })
+        .filter(msg => msg.length >= 10); // Ensure minimum meaningful length
 
 	if (messages.length > 0) return deduplicateMessages(messages);
 
