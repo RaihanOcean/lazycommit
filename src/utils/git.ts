@@ -19,7 +19,6 @@ const excludeFromDiff = (path: string) => `:(exclude)${path}`;
 
 const filesToExclude = [
 	'package-lock.json',
-	'pnpm-lock.yaml',
 	'node_modules/**',
 	'dist/**',
 	'build/**',

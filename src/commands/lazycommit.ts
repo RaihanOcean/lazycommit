@@ -7,6 +7,7 @@ import {
 	select,
 	confirm,
 	isCancel,
+    text,
 } from '@clack/prompts';
 import {
     assertGitRepo,
@@ -344,10 +345,36 @@ export default async (
 					commitSpinner.start(`Creating commit ${i + 1}/${groups.length}: ${group.message}`);
 					
 					try {
+						// Optionally edit this group's commit message before committing
+						let finalMessage = group.message!;
+						const wantsEdit = await confirm({ message: `Edit commit ${i + 1} message before committing?` });
+						if (wantsEdit && !isCancel(wantsEdit)) {
+							const edited = await text({
+								message: 'Edit commit message:',
+								initialValue: finalMessage,
+								validate: (value) => (value && value.trim().length > 0 ? undefined : 'Message cannot be empty'),
+							});
+						if (isCancel(edited)) {
+								outro('Commits cancelled');
+								return;
+							}
+							finalMessage = String(edited).trim();
+							group.message = finalMessage;
+						}
+
+					// Confirm proceed with the (possibly edited) message for this commit
+					const proceedGroup = await confirm({
+						message: `Proceed with commit ${i + 1}/${groups.length} message?\n\n   ${finalMessage}\n`,
+					});
+					if (!proceedGroup || isCancel(proceedGroup)) {
+						outro('Commits cancelled');
+						return;
+					}
+
 						// Reset and stage only files for this group
 						await execa('git', ['reset', 'HEAD', '--']);
 						await execa('git', ['add', ...group.files]);
-						await execa('git', ['commit', '-m', group.message!, ...rawArgv]);
+						await execa('git', ['commit', '-m', finalMessage, ...rawArgv]);
 					} finally {
 						commitSpinner.stop(`Commit ${i + 1} created`);
 					}
@@ -401,15 +428,35 @@ export default async (
 		}
 
 		let message: string;
+		let editedAlready = false;
 		if (messages.length === 1) {
 			[message] = messages;
-			const confirmed = await confirm({
-				message: `Use this commit message?\n\n   ${message}\n`,
+			const choice = await select({
+				message: `Review generated commit message:\n\n   ${message}\n`,
+				options: [
+					{ label: 'Use as-is', value: 'use' },
+					{ label: 'Edit', value: 'edit' },
+					{ label: 'Cancel', value: 'cancel' },
+				],
 			});
 
-			if (!confirmed || isCancel(confirmed)) {
+			if (isCancel(choice) || choice === 'cancel') {
 				outro('Commit cancelled');
 				return;
+			}
+
+			if (choice === 'edit') {
+				const edited = await text({
+					message: 'Edit commit message:',
+					initialValue: message,
+					validate: (value) => (value && value.trim().length > 0 ? undefined : 'Message cannot be empty'),
+				});
+				if (isCancel(edited)) {
+					outro('Commit cancelled');
+					return;
+				}
+				message = String(edited).trim();
+				editedAlready = true;
 			}
 		} else {
 			const selected = await select({
@@ -423,6 +470,32 @@ export default async (
 			}
 
 			message = selected as string;
+		}
+
+		// Offer editing of the final commit message (skip if already edited)
+		if (!editedAlready) {
+			const wantsEdit = await confirm({ message: 'Edit the commit message before committing?' });
+			if (wantsEdit && !isCancel(wantsEdit)) {
+				const edited = await text({
+					message: 'Edit commit message:',
+					initialValue: message,
+					validate: (value) => (value && value.trim().length > 0 ? undefined : 'Message cannot be empty'),
+				});
+				if (isCancel(edited)) {
+					outro('Commit cancelled');
+					return;
+				}
+				message = String(edited).trim();
+			}
+		}
+
+		// Final proceed confirmation displaying the message
+		const proceed = await confirm({
+			message: `Proceed with this commit message?\n\n   ${message}\n`,
+		});
+		if (!proceed || isCancel(proceed)) {
+			outro('Commit cancelled');
+			return;
 		}
 
 		await execa('git', ['commit', '-m', message, ...rawArgv]);
