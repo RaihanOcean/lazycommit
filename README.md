@@ -12,8 +12,9 @@
 
 ---
 
-
-<a href="https://peerlist.io/code_kartik/project/lazycommit" ><img width="2000" height="900" alt="unnamed" src="https://github.com/user-attachments/assets/875a0d7b-445b-4adc-af4f-d711af5eb5f4" /></a>
+<div align="center">
+  <a href="https://peerlist.io/code_kartik/project/lazycommit" ><img width="400" height="128" alt="LazyCommit" src="https://github.com/user-attachments/assets/5d54d238-38f4-44f2-b253-3959b2487987" /></a>
+</div>
 
 
 
