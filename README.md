@@ -12,6 +12,11 @@
 
 ---
 
+
+<a href="https://peerlist.io/code_kartik/project/lazycommit" ><img width="2000" height="900" alt="unnamed" src="https://github.com/user-attachments/assets/875a0d7b-445b-4adc-af4f-d711af5eb5f4" /></a>
+
+
+
 ## Setup
 
 > The minimum supported version of Node.js is v18. Check your Node.js version with `node --version`.
